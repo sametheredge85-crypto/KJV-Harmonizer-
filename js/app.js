@@ -10,6 +10,34 @@ const app = {
     deferredPrompt: null
 };
 
+/**
+ * Sanitize a string for safe use in HTML attributes
+ * Escapes special characters to prevent XSS
+ */
+function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\\/g, '&#92;');
+}
+
+/**
+ * Sanitize a string for safe use in JavaScript string literals
+ */
+function escapeForJs(str) {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
+}
+
 // DOM Elements
 const elements = {
     menuBtn: document.getElementById('menuBtn'),
@@ -145,10 +173,11 @@ function displayQuickSearchResults(results, term) {
     }
     
     const html = results.map(result => {
-        const highlightedText = highlightTerm(result.text, term);
+        const safeRef = escapeHtml(`${result.book} ${result.chapter}:${result.verse}`);
+        const highlightedText = highlightTerm(escapeHtml(result.text), term);
         return `
-            <div class="search-result-item" data-ref="${result.book} ${result.chapter}:${result.verse}">
-                <div class="reference">${result.book} ${result.chapter}:${result.verse}</div>
+            <div class="search-result-item" data-ref="${safeRef}">
+                <div class="reference">${safeRef}</div>
                 <div class="preview">${highlightedText}</div>
             </div>
         `;
@@ -170,7 +199,9 @@ function displayQuickSearchResults(results, term) {
 }
 
 function highlightTerm(text, term) {
-    const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');
+    // Escape the term for regex, then find matches and wrap in highlight span
+    const safeTerm = escapeHtml(term);
+    const regex = new RegExp(`(${escapeRegExp(safeTerm)})`, 'gi');
     return text.replace(regex, '<span class="highlight">$1</span>');
 }
 
@@ -219,10 +250,10 @@ function displayHarmonyEvent(eventId) {
 }
 
 function formatPassageHTML(passage) {
-    let html = `<p class="reference-label"><strong>${passage.reference}</strong></p>`;
+    let html = `<p class="reference-label"><strong>${escapeHtml(passage.reference)}</strong></p>`;
     
     passage.verses.forEach(v => {
-        html += `<p class="verse"><span class="verse-num">${v.verse}</span>${v.text}</p>`;
+        html += `<p class="verse"><span class="verse-num">${escapeHtml(String(v.verse))}</span>${escapeHtml(v.text)}</p>`;
     });
     
     return html;
@@ -289,17 +320,28 @@ function loadParallelVerse(panel, reference) {
         ? `${book} ${chapter}:${startVerse}-${endVerse}`
         : `${book} ${chapter}:${startVerse}`;
     
-    let html = `<h4>${refText}</h4>`;
+    const safeRefText = escapeHtml(refText);
+    const combinedText = verses.map(v => v.text).join(' ');
+    
+    let html = `<h4>${safeRefText}</h4>`;
     verses.forEach(v => {
-        html += `<p class="verse"><span class="verse-num">${v.verse}</span>${v.text}</p>`;
+        html += `<p class="verse"><span class="verse-num">${escapeHtml(String(v.verse))}</span>${escapeHtml(v.text)}</p>`;
     });
     
-    // Add bookmark button
-    html += `<button class="secondary-btn" style="margin-top: 16px;" onclick="addBookmark('${refText}', '${verses.map(v => v.text).join(' ').replace(/'/g, "\\'")}')">
+    // Add bookmark button - store data attributes instead of inline onclick
+    html += `<button class="secondary-btn bookmark-btn" style="margin-top: 16px;" data-ref="${safeRefText}" data-text="${escapeHtml(combinedText)}">
         ★ Bookmark
     </button>`;
     
     panelElement.innerHTML = html;
+    
+    // Attach event listener for bookmark button
+    const bookmarkBtn = panelElement.querySelector('.bookmark-btn');
+    if (bookmarkBtn) {
+        bookmarkBtn.addEventListener('click', () => {
+            addBookmark(bookmarkBtn.dataset.ref, bookmarkBtn.dataset.text);
+        });
+    }
 }
 
 function parseReference(reference) {
@@ -383,13 +425,15 @@ function displayMainSearchResults(results, term) {
     }
     
     const html = results.map(result => {
-        const highlightedText = highlightTerm(result.text, term);
+        const safeRef = escapeHtml(`${result.book} ${result.chapter}:${result.verse}`);
+        const safeText = escapeHtml(result.text);
+        const highlightedText = highlightTerm(safeText, term);
         return `
-            <div class="search-result-item" data-ref="${result.book} ${result.chapter}:${result.verse}">
-                <div class="reference">${result.book} ${result.chapter}:${result.verse}</div>
+            <div class="search-result-item" data-ref="${safeRef}">
+                <div class="reference">${safeRef}</div>
                 <div class="preview">${highlightedText}</div>
-                <button class="secondary-btn" style="margin-top: 8px; padding: 4px 8px; font-size: 0.8rem;" 
-                    onclick="event.stopPropagation(); addBookmark('${result.book} ${result.chapter}:${result.verse}', '${result.text.replace(/'/g, "\\'")}')">
+                <button class="secondary-btn search-bookmark-btn" style="margin-top: 8px; padding: 4px 8px; font-size: 0.8rem;" 
+                    data-ref="${safeRef}" data-text="${safeText}">
                     ★ Bookmark
                 </button>
             </div>
@@ -397,6 +441,14 @@ function displayMainSearchResults(results, term) {
     }).join('');
     
     container.innerHTML = `<p style="margin-bottom: 16px; color: var(--text-muted);">${results.length} result${results.length !== 1 ? 's' : ''} found</p>` + html;
+    
+    // Attach event listeners for bookmark buttons
+    container.querySelectorAll('.search-bookmark-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addBookmark(btn.dataset.ref, btn.dataset.text);
+        });
+    });
 }
 
 // Bookmarks Functions
@@ -449,18 +501,31 @@ function displayBookmarks() {
     }
     
     const html = app.bookmarks.map(bookmark => `
-        <div class="bookmark-item" data-id="${bookmark.id}">
-            <div class="reference">${bookmark.reference}</div>
-            <div class="text">${bookmark.text}</div>
-            ${bookmark.note ? `<div class="note">${bookmark.note}</div>` : ''}
+        <div class="bookmark-item" data-id="${escapeHtml(String(bookmark.id))}">
+            <div class="reference">${escapeHtml(bookmark.reference)}</div>
+            <div class="text">${escapeHtml(bookmark.text)}</div>
+            ${bookmark.note ? `<div class="note">${escapeHtml(bookmark.note)}</div>` : ''}
             <div class="actions">
-                <button class="secondary-btn" onclick="viewBookmark('${bookmark.reference}')">View</button>
-                <button class="secondary-btn" style="color: #dc2626; border-color: #dc2626;" onclick="removeBookmark(${bookmark.id})">Remove</button>
+                <button class="secondary-btn view-bookmark-btn" data-ref="${escapeHtml(bookmark.reference)}">View</button>
+                <button class="secondary-btn remove-bookmark-btn" style="color: #dc2626; border-color: #dc2626;" data-id="${escapeHtml(String(bookmark.id))}">Remove</button>
             </div>
         </div>
     `).join('');
     
     container.innerHTML = html;
+    
+    // Attach event listeners
+    container.querySelectorAll('.view-bookmark-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            viewBookmark(btn.dataset.ref);
+        });
+    });
+    
+    container.querySelectorAll('.remove-bookmark-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            removeBookmark(parseInt(btn.dataset.id, 10));
+        });
+    });
 }
 
 function viewBookmark(reference) {

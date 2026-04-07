@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a365d">
+    <meta name="description" content="KJV Harmonizer - Unbiased whole counsel, whole context, wholly harmonious Bible study tool">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KJV Harmonizer">
+    
+    <title>KJV Harmonizer</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon and Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <h1 class="app-title">KJV Harmonizer</h1>
+            <button class="search-btn" id="searchBtn" aria-label="Search">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+            </button>
+        </div>
+        <p class="app-subtitle">Unbiased whole counsel, whole context, wholly harmonious</p>
+    </header>
+
+    <!-- Navigation Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Navigation</h2>
+            <button class="close-sidebar" id="closeSidebar" aria-label="Close menu">×</button>
+        </div>
+        <ul class="nav-list">
+            <li><a href="#" data-section="harmony" class="active">Gospel Harmony</a></li>
+            <li><a href="#" data-section="parallel">Parallel View</a></li>
+            <li><a href="#" data-section="search">Search</a></li>
+            <li><a href="#" data-section="bookmarks">Bookmarks</a></li>
+            <li><a href="#" data-section="about">About</a></li>
+        </ul>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Search Modal -->
+    <div class="search-modal" id="searchModal">
+        <div class="search-modal-content">
+            <div class="search-header">
+                <input type="text" id="searchInput" placeholder="Search the Scriptures..." autocomplete="off">
+                <button class="close-search" id="closeSearch">×</button>
+            </div>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Harmony Section -->
+        <section class="section harmony-section active" id="harmonySection">
+            <div class="section-header">
+                <h2>Gospel Harmony</h2>
+                <p>Compare parallel passages from Matthew, Mark, Luke, and John</p>
+            </div>
+            
+            <!-- Event Selector -->
+            <div class="event-selector">
+                <label for="eventSelect">Select Gospel Event:</label>
+                <select id="eventSelect" class="styled-select">
+                    <option value="">-- Choose an event --</option>
+                </select>
+            </div>
+
+            <!-- Harmony Display -->
+            <div class="harmony-grid" id="harmonyGrid">
+                <div class="gospel-column" data-gospel="matthew">
+                    <h3>Matthew</h3>
+                    <div class="verse-content" id="matthewContent">
+                        <p class="placeholder-text">Select an event to view Matthew's account</p>
+                    </div>
+                </div>
+                <div class="gospel-column" data-gospel="mark">
+                    <h3>Mark</h3>
+                    <div class="verse-content" id="markContent">
+                        <p class="placeholder-text">Select an event to view Mark's account</p>
+                    </div>
+                </div>
+                <div class="gospel-column" data-gospel="luke">
+                    <h3>Luke</h3>
+                    <div class="verse-content" id="lukeContent">
+                        <p class="placeholder-text">Select an event to view Luke's account</p>
+                    </div>
+                </div>
+                <div class="gospel-column" data-gospel="john">
+                    <h3>John</h3>
+                    <div class="verse-content" id="johnContent">
+                        <p class="placeholder-text">Select an event to view John's account</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Parallel View Section -->
+        <section class="section parallel-section" id="parallelSection">
+            <div class="section-header">
+                <h2>Parallel View</h2>
+                <p>Read verses side by side</p>
+            </div>
+            <div class="parallel-controls">
+                <div class="reference-input">
+                    <label for="leftReference">Left Panel:</label>
+                    <input type="text" id="leftReference" placeholder="e.g., John 3:16">
+                    <button class="load-btn" data-panel="left">Load</button>
+                </div>
+                <div class="reference-input">
+                    <label for="rightReference">Right Panel:</label>
+                    <input type="text" id="rightReference" placeholder="e.g., Romans 10:9">
+                    <button class="load-btn" data-panel="right">Load</button>
+                </div>
+            </div>
+            <div class="parallel-display">
+                <div class="parallel-panel" id="leftPanel">
+                    <p class="placeholder-text">Enter a reference to display</p>
+                </div>
+                <div class="parallel-panel" id="rightPanel">
+                    <p class="placeholder-text">Enter a reference to display</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Section -->
+        <section class="section search-section" id="searchSection">
+            <div class="section-header">
+                <h2>Search the Scriptures</h2>
+                <p>Find verses containing specific words or phrases</p>
+            </div>
+            <div class="search-form">
+                <input type="text" id="mainSearchInput" placeholder="Enter search term...">
+                <button id="mainSearchBtn" class="primary-btn">Search</button>
+            </div>
+            <div class="search-filters">
+                <label>
+                    <input type="checkbox" id="filterMatthew" checked> Matthew
+                </label>
+                <label>
+                    <input type="checkbox" id="filterMark" checked> Mark
+                </label>
+                <label>
+                    <input type="checkbox" id="filterLuke" checked> Luke
+                </label>
+                <label>
+                    <input type="checkbox" id="filterJohn" checked> John
+                </label>
+            </div>
+            <div class="main-search-results" id="mainSearchResults"></div>
+        </section>
+
+        <!-- Bookmarks Section -->
+        <section class="section bookmarks-section" id="bookmarksSection">
+            <div class="section-header">
+                <h2>Bookmarks</h2>
+                <p>Your saved verses and notes</p>
+            </div>
+            <div class="bookmarks-list" id="bookmarksList">
+                <p class="placeholder-text">No bookmarks saved yet. Click the bookmark icon on any verse to save it.</p>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="section about-section" id="aboutSection">
+            <div class="section-header">
+                <h2>About KJV Harmonizer</h2>
+            </div>
+            <div class="about-content">
+                <p><strong>KJV Harmonizer</strong> is a Bible study tool designed to help you understand the Scriptures through the lens of harmony.</p>
+                
+                <h3>Our Mission</h3>
+                <p>Unbiased whole counsel, whole context, wholly harmonious. We believe that Scripture interprets Scripture, and by viewing parallel passages together, we can gain deeper understanding of God's Word.</p>
+                
+                <h3>Features</h3>
+                <ul>
+                    <li><strong>Gospel Harmony:</strong> Compare parallel passages from all four Gospels side by side</li>
+                    <li><strong>Parallel View:</strong> Display any two passages for comparison</li>
+                    <li><strong>Search:</strong> Find verses containing specific words or phrases</li>
+                    <li><strong>Bookmarks:</strong> Save your favorite verses and add notes</li>
+                    <li><strong>Offline Access:</strong> Works without internet connection</li>
+                </ul>
+                
+                <h3>King James Version</h3>
+                <p>This app uses the King James Version (KJV) of the Holy Bible, first published in 1611 and beloved for its majestic language and faithful translation.</p>
+                
+                <div class="version-info">
+                    <p>Version 1.0.0</p>
+                    <p>© 2024 KJV Harmonizer</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Install Prompt -->
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-content">
+            <p>Install KJV Harmonizer for quick access!</p>
+            <div class="install-buttons">
+                <button id="installBtn" class="primary-btn">Install</button>
+                <button id="dismissInstall" class="secondary-btn">Not now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>KJV Harmonizer • Study the Word in Harmony</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/kjv-data.js"></script>
+    <script src="js/harmony-data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
